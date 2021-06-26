@@ -1,94 +1,125 @@
 class Vacationer {
-    #fullName
-    idNumber
-    creditCard
-    wishList
-    constructor(fullName, cardInfo = [1111, '', 111]) {
-        this.fullName = fullName
-        this.addCreditCardInfo(cardInfo)
-        this.wishList = []
-        this.idNumber = this.generateIDNumber()
-    }
-    get fullName() {
-        return this.#fullName
+    constructor(fullName, creditCard){
+        this.fullName=fullName;
+        this._idNumber = this.generateIDNumber();
+        this.creditCard=creditCard;
+        this.wishList=[];
     }
 
-    set fullName(arr) {
-        if (arr.length !== 3)
-            throw new Error('Name must include first name, middle name and last name')
-
-        if (arr.some(x => ! /^[A-Z][a-z]+$/g.test(x)))
-            throw new Error('Invalid full name')
-
-        this.#fullName = { firstName: arr[0], middleName: arr[1], lastName: arr[2] }
+    get fullName(){
+        return this._fullName;
     }
-
-    generateIDNumber() {
-        const additional = [
-            'a', 'e', 'o', 'i', 'u'
-        ].includes(this.fullName.lastName.charAt(this.fullName.lastName.length - 1)) ? 8 : 7
-
-        return `${((231 * this.fullName.firstName.charCodeAt(0)) +
-            (139 * this.fullName.middleName.length))
-            }${additional}`
+    set fullName(value){
+        if (value.length!=3) {
+            throw new Error('Name must include first name, middle name and last name');
+        }
+        const regex = new RegExp('^[A-Z]{1}[a-z]{1,30}$');
+        for (let index = 0; index < value.length; index++) {            
+            if (!regex.test(value[index])) {
+                throw new Error('Invalid full name');
+            }
+        }
+        this._fullName={firstName:value[0], middleName:value[1], lastName:value[2]};
     }
-
-    addCreditCardInfo(arr) {
-        if (arr.length < 3)
-            throw new Error('Missing credit card information')
-        if (typeof arr[0] !== 'number' || typeof arr[2] !== 'number')
-            throw new Error('Invalid credit card details')
-
-        this.creditCard = {
-            cardNumber: arr[0], expirationDate: arr[1], securityNumber: arr[2]
+    get creditCard(){
+        return this._creditCard;
+    }
+    set creditCard(value){
+        if (value===undefined) {
+            this._creditCard={cardNumber: 1111,expirationDate: '',securityNumber: 111}
+        }else{
+            if (value.length!=3) {
+                throw new Error('Missing credit card information');
+            }
+            if ((typeof value[0] != 'number') || (typeof value[2] != 'number')) {
+                throw new Error('Invalid credit card details');
+            }
+            this._creditCard={cardNumber: value[0],expirationDate: value[1],securityNumber: value[2]};
         }
     }
 
-    addDestinationToWishList(d) {
-        if (this.wishList.includes(d))
-            throw new Error('Destination already exists in wishlist')
-        this.wishList.push(`${d}`)
-        this.wishList.sort((a, b) => a.length - b.length)
+    get idNumber(){
+        return this._idNumber;
+    }
+    set idNumber(value){
+        this._idNumber=this.generateIDNumber();
+    }
+    
+
+    generateIDNumber(){        
+        let total=231*this.fullName.firstName.charCodeAt(0)+139*this.fullName.middleName.length;       
+        let vowel=['a','e','o','i','u'];
+        let result='';
+        if (vowel.includes(this.fullName.lastName[this.fullName.lastName.length-1])) {
+            result=total.toString()+'8';
+        }else{
+            result=total.toString()+'7';
+        }
+        return result;
     }
 
-    getVacationerInfo() {
-        return `Name: ${this.fullName.firstName} ${this.fullName.middleName} ${this.fullName.lastName}
-ID Number: ${this.idNumber}
-Wishlist:
-${this.wishList.length > 0 ? this.wishList.join(', ') : 'empty'}
-Credit Card:
-Card Number: ${this.creditCard.cardNumber}
-Expiration Date: ${this.creditCard.expirationDate}
-Security Number: ${this.creditCard.securityNumber}`
+    addCreditCardInfo(input){
+        if (input.length!=3) {
+            throw new Error('Missing credit card information');
+        }
+        if ((typeof input[0] != 'number') || (typeof input[2] != 'number')) {
+            throw new Error('Invalid credit card details');
+        }
+        this._creditCard={cardNumber: input[0],expirationDate: input[1],securityNumber: input[2]};
+    }
+
+    addDestinationToWishList(destination){
+        if (this.wishList.includes(destination)) {
+            throw new Error('Destination already exists in wishlist');
+        }
+        this.wishList.push(destination);
+        //starting from the destination with the shortest name to the one with the longest name
+        this.wishList.sort(function (a, b) {
+            if (a.length < b.length) {
+                return -1;
+            }
+            if (b.length < a.length) {
+                return 1;
+            }
+            return 0;
+        });
+    }
+
+    getVacationerInfo(){
+        let wishListString='';
+        if (this.wishList.length==0) {
+            wishListString='empty';
+        }else{
+            wishListString=this.wishList.join(', ');
+        }
+        let result='';
+        result+=`Name: ${this.fullName.firstName} ${this.fullName.middleName} ${this.fullName.lastName}\n`;
+        result+=`ID Number: ${this.idNumber}\n`;
+        result+=`Wishlist:\n`;
+        result+=`${wishListString}\n`;
+        result+=`Credit Card:\n`;
+        result+=`Card Number: ${this.creditCard.cardNumber}\n`;
+        result+=`Expiration Date: ${this.creditCard.expirationDate}\n`;
+        result+=`Security Number: ${this.creditCard.securityNumber}`;
+        return result;
     }
 }
 
-
+// Validate instance creation 
 // Initialize vacationers with 2 and 3 parameters
-let vacationer1 = new Vacationer(["Vania", "Ivanova", "Zhivkova"]);
-let vacationer2 = new Vacationer(["Tania", "Ivanova", "Zhivkova"],
-    [123456789, "10/01/2018", 777]);
+let vacationer1 = new Vacationer(["Vania", "Ivanova", "Zhivkova"],[123456789, "10/01/2018", 777]);
 
-// Should throw an error (Invalid full name)
-try {
-    let vacationer3 = new Vacationer(["Vania", "Ivanova", "ZhiVkova"]);
-} catch (err) {
-    console.log("Error: " + err.message);
-}
-
-// Should throw an error (Missing credit card information)
-try {
-    let vacationer3 = new Vacationer(["Zdravko", "Georgiev", "Petrov"]);
-    vacationer3.addCreditCardInfo([123456789, "20/10/2018"]);
-} catch (err) {
-    console.log("Error: " + err.message);
-}
+vacationer1.idNumber=4;
 
 vacationer1.addDestinationToWishList('Spain');
+vacationer1.addDestinationToWishList('Spaine');
+vacationer1.addDestinationToWishList('Spaiee');
 vacationer1.addDestinationToWishList('Germany');
-vacationer1.addDestinationToWishList('Bali');
+
+//vacationer1.wishList=4;
+
+//vacationer1.addDestinationToWishList('Bali');
 
 // Return information about the vacationers
 console.log(vacationer1.getVacationerInfo());
-console.log(vacationer2.getVacationerInfo());
-
+//console.log(vacationer2.getVacationerInfo());
